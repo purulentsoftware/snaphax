@@ -1,4 +1,4 @@
-<?php
+<?
 	/*
 	SnapHax: a library for communicating with Snaphax	
 	Implements a subset of the Snaphax API
@@ -31,7 +31,7 @@
 		'secret' => 'iEk21fuwZApXlz93750dmW22pw389dPwOk',
 		'static_token' => 'm198sOkJEn37DjqZ32lpRu76xmw288xSQ9',
 		'url' => 'https://feelinsonice-hrd.appspot.com',
-		'user_agent' => 'Snaphax 4.0.1 (iPad; iPhone OS 6.0; en_US)'
+		'user_agent' => 'Snapchat/6.1.2 (iPhone6,1; iOS 7.0.4; gzip)'
 	);
 
 	if (!function_exists('curl_init')) {
@@ -61,7 +61,7 @@
 		function login() {
 			$ts = $this->api->time();
 			$out = $this->api->postCall(
-				'/bq/login',
+				'/ph/login',
 				array(
 					'username' => $this->options['username'],
 					'password' => $this->options['password'],
@@ -81,7 +81,7 @@
 				throw new Exception('no auth token');
 			}
 			$ts = $this->api->time();
-			$url = "/bq/blob";
+			$url = "/ph/blob";
 			$result = $this->api->postCall($url, array(
 				'id' => $id,
 				'timestamp' => $ts, 
@@ -122,7 +122,7 @@
 			$this->api->debug('upload snap data encrypted', $file_data_encrypted);
 			file_put_contents('/tmp/blah.jpg', $file_data_encrypted);
 			$result = $this->api->postCall(
-				'/bq/upload',
+				'/ph/upload',
 				array(
 					'username' => $this->options['username'],
 					'timestamp' => $ts,
@@ -141,7 +141,7 @@
 			foreach ($recipients as $recipient) {
 				$ts = $this->api->time();
 				$result = $this->api->postCall(
-					'/bq/send',
+					'/ph/send',
 					array(
 						'username' => $this->options['username'],
 						'timestamp' => $ts,
@@ -192,12 +192,31 @@
 			else
 				return false;
 		}
+		
+		function pkcspad($data) {
+			// Block size is 16 bytes
+			$needed_padding = 16 - strlen($data) % 16;
+			if ($needed_padding == 0) {
+				$needed_padding = 16;
+			}
+			return $data . str_repeat(chr($needed_padding), $needed_padding);
+		}
 
 		function decrypt($data) {
+			$needed_padding = 16 - strlen($data) % 16;
+			if ($needed_padding == 0) {
+				$needed_padding = 16;
+			}
+			$data=$data . str_repeat(chr($needed_padding), $needed_padding);
 			return mcrypt_decrypt('rijndael-128', $this->options['blob_enc_key'], $data, 'ecb');
 		}
 
 		function encrypt($data) {
+			$needed_padding = 16 - strlen($data) % 16;
+			if ($needed_padding == 0) {
+				$needed_padding = 16;
+			}
+			$data=$data . str_repeat(chr($needed_padding), $needed_padding);
 			return mcrypt_encrypt('rijndael-128', $this->options['blob_enc_key'], $data, 'ecb');
 		}
 
@@ -275,4 +294,3 @@
 	}
 
 
-?>
